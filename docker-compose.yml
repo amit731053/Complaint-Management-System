@@ -1,0 +1,42 @@
+# App + MySQL on one machine (a VPS, or your own PC to try the production setup).
+#   1) copy .env.example to .env and fill in the values
+#   2) docker compose up -d --build
+#   3) open http://localhost:8080
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: cms_db
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASS}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://db:3306/cms_db?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD}
+      # true when served over HTTPS (production). false only for plain http://localhost testing.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    ports:
+      - "8080:8080"
+
+volumes:
+  dbdata:

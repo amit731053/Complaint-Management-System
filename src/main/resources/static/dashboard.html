@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <script src="common.js"></script>
+    <link rel="stylesheet" href="tailwind.css">
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <script>
+        window.addEventListener("pageshow", function () {
+
+            const user = JSON.parse(sessionStorage.getItem("user") || "null");
+
+            if (!user || !user.email) {
+                window.location.replace("index.html");
+            }
+        });
+        const user = JSON.parse(sessionStorage.getItem("user") || "null");
+
+        if (!user || user.role !== "USER") {
+            window.location.href = "index.html";
+        }
+
+    </script>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - UniSupport</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+        }
+
+        .btn-press:active {
+            transform: scale(0.96);
+            transition: transform 0.1s;
+        }
+
+        .lift-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .lift-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .lift-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        }
+
+        .lift-card-subtle {
+            transition: transform 0.4s ease-out, box-shadow 0.4s ease-out;
+        }
+
+        .lift-card-subtle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .lift-card-subtle:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .skeleton {
+            background: #f1f5f9;
+            background-image: linear-gradient(to right, #f1f5f9 0%, #e2e8f0 20%, #f1f5f9 40%, #f1f5f9 100%);
+            background-repeat: no-repeat;
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear forwards;
+            border-radius: 4px;
+        }
+
+        .dark .skeleton {
+            background: #27272a;
+            background-image: linear-gradient(to right, #27272a 0%, #3f3f46 20%, #27272a 40%, #27272a 100%);
+        }
+
+        .quirky-border {
+            border-radius: 12px 12px 4px 12px;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #notif-dropdown {
+            transform-origin: top right;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: all 0.2s ease;
+            display: none;
+        }
+
+        #notif-dropdown.show {
+            display: block;
+            transform: scale(1);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc] dark:bg-zinc-950 text-slate-800 dark:text-gray-200 flex min-h-screen overflow-x-hidden">
+
+    <div id="initial-loader"
+        class="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 flex flex-col items-center justify-center transition-opacity duration-500">
+        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-600 dark:text-indigo-400 mb-4"></i>
+        <p class="text-slate-500 dark:text-zinc-400 font-medium tracking-wide animate-pulse">Initializing Dashboard...
+        </p>
+    </div>
+
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-40 w-[260px] bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-sm dark:shadow-none flex flex-col">
+        <div class="h-20 flex items-center pl-7 pr-4 border-b border-gray-100 dark:border-zinc-800">
+            <div
+                class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-400 text-white flex items-center justify-center mr-3 shadow-sm">
+                <i class="fa-solid fa-graduation-cap text-sm"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-indigo-900 dark:text-gray-100">Uni<span
+                    class="text-indigo-600 dark:text-indigo-400">Support</span></h1>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+            <p class="text-xs font-semibold text-slate-500 dark:text-zinc-500 uppercase tracking-wider mb-3 pl-3">Main
+                Menu</p>
+
+            <a href="#" onclick="switchView('dashboard-view', this)"
+                class="nav-item flex items-center px-3 py-2.5 bg-[#f1f5fb] dark:bg-zinc-800 text-indigo-600 dark:text-indigo-300 rounded-lg group transition-colors relative">
+                <span
+                    class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 dark:bg-indigo-400 rounded-r-md"></span>
+                <i class="fa-solid fa-table-columns w-6 text-center"></i>
+                <span class="ml-2 font-medium">Dashboard</span>
+            </a>
+
+            <a href="my-complaints.html"
+                class="nav-item flex items-center px-3 py-2.5 text-slate-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-lg group transition-colors">
+                <i class="fa-solid fa-ticket w-6 text-center group-hover:scale-110 transition-transform"></i>
+                <span class="ml-2 font-medium">My Tickets</span>
+            </a>
+
+            <a href="add-complaint.html"
+                class="nav-item flex items-center px-3 py-2.5 text-slate-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-lg group transition-colors">
+                <i class="fa-solid fa-plus-circle w-6 text-center group-hover:scale-110 transition-transform"></i>
+                <span class="ml-2 font-medium">New Request</span>
+            </a>
+
+            <div class="h-px bg-gray-200 dark:bg-zinc-800 my-4 mx-2"></div>
+
+            <a href="#" onclick="switchView('reports-view', this)"
+                class="nav-item flex items-center px-3 py-2.5 text-slate-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 rounded-lg group transition-colors">
+                <i class="fa-solid fa-chart-line w-6 text-center group-hover:scale-110 transition-transform"></i>
+                <span class="ml-2 font-medium">Reports</span>
+            </a>
+
+            <div
+                class="mx-3 mt-6 p-4 bg-indigo-50/60 dark:bg-zinc-800/50 rounded-xl border border-indigo-100 dark:border-zinc-700/50">
+                <p class="text-[10px] font-bold text-indigo-800 dark:text-indigo-400 uppercase tracking-wider mb-2"><i
+                        class="fa-solid fa-headset mr-1"></i> IT Support</p>
+                <p class="text-xs text-gray-700 dark:text-gray-300 font-medium mb-1">Ramesh K. (Admin)</p>
+                <a href="tel:+919876543210"
+                    class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline block mb-1"><i
+                        class="fa-solid fa-phone mr-1"></i> +91 98765 43210</a>
+                <a href="mailto:support@college.edu"
+                    class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline block"><i
+                        class="fa-solid fa-envelope mr-1"></i> support@college.edu</a>
+            </div>
+
+        </nav>
+
+        <div class="p-4 border-t border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900">
+            <a href="#"
+                class="flex items-center gap-3 text-slate-700 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer">
+                <img id="userAvatar" src=""
+                    class="w-9 h-9 rounded-full border-2 border-white dark:border-zinc-700 shadow-sm">
+                <div>
+                    <p id="username" class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">User</p>
+                    <p onclick="logout()" class="text-[11px] font-mono cursor-pointer">
+                        Logout <i class="fa-solid fa-right-from-bracket ms-1"></i>
+                    </p>
+                </div>
+            </a>
+        </div>
+    </aside>
+
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-30 hidden md:hidden transition-opacity"></div>
+
+    <main class="flex-1 md:ml-[250px] flex flex-col min-h-screen relative">
+
+        <header
+            class="h-20 bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-6 flex items-center justify-between z-20 sticky top-0">
+            <div class="flex items-center">
+                <button id="sidebar-toggle"
+                    class="md:hidden mr-4 text-slate-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-2 rounded-md hover:bg-[#f1f5fb] dark:hover:bg-zinc-800 btn-press">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div>
+                    <h2 id="header-title"
+                        class="text-lg font-semibold text-slate-800 dark:text-gray-100 hidden sm:block">Overview</h2>
+                    <p class="text-xs text-slate-500 dark:text-zinc-400 hidden sm:block">Campus IT & Maintenance Support
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="relative hidden lg:block">
+                    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Search tickets..."
+                        class="w-64 pl-9 pr-4 py-2 bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all dark:text-gray-200 placeholder-gray-400 dark:placeholder-zinc-500">
+                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 dark:text-zinc-500 text-sm"></i>
+                </div>
+
+                <button onclick="toggleTheme()"
+                    class="w-9 h-9 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors btn-press">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+
+                <div class="relative">
+                    <button onclick="toggleNotifications()"
+                        class="w-10 h-10 rounded-full border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-slate-500 dark:text-gray-400 hover:bg-[#f1f5fb] dark:hover:bg-zinc-800 transition-colors relative btn-press">
+                        <i class="fa-regular fa-bell"></i>
+                        <span id="notifCount"
+                            class="absolute top-0 right-0 bg-red-500 text-white text-[10px] px-1.5 rounded-full hidden">
+                            0
+                        </span></button>
+                    <div id="notif-dropdown"
+                        class="absolute right-0 mt-2 w-80 max-h-[400px] overflow-y-auto bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg z-50">
+                        <div
+                            class="px-4 py-2 border-b border-gray-100 dark:border-zinc-700 font-semibold text-sm dark:text-gray-200">
+                            Notifications</div>
+
+                    </div>
+                </div>
+
+                <button onclick="window.location.href='add-complaint.html'"
+                    class="bg-indigo-900 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md hover:bg-indigo-600 dark:hover:bg-indigo-500 transition-colors flex items-center gap-2 btn-press">
+                    <i class="fa-solid fa-plus text-xs"></i> Create
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 p-6 md:pr-8 md:pl-6 pb-12">
+
+            <div id="dashboard-skeletons" class="block">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="h-28 skeleton"></div>
+                    <div class="h-28 skeleton"></div>
+                    <div class="h-28 skeleton"></div>
+                </div>
+                <div class="h-64 skeleton mb-6"></div>
+            </div>
+
+            <div id="dashboard-content" class="hidden opacity-0 transition-opacity duration-700">
+
+                <div id="dashboard-view" class="view-section active">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                        <div
+                            class="bg-white dark:bg-zinc-900 rounded-xl p-5 border border-gray-200 dark:border-zinc-800 lift-card shadow-sm dark:shadow-none relative overflow-hidden">
+                            <div
+                                class="absolute right-0 top-0 w-24 h-24 bg-[#f1f5fb] dark:bg-zinc-800 rounded-bl-full -z-10 opacity-50 dark:opacity-100">
+                            </div>
+                            <div class="flex justify-between items-start z-10">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500 dark:text-zinc-400">Total Requests</p>
+                                    <h3 id="totalCount" class="text-3xl font-bold ...">0</h3>
+                                </div>
+                                <div
+                                    class="w-10 h-10 rounded-full bg-[#f1f5fb] dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-inbox"></i>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div
+                            class="bg-white dark:bg-zinc-900 rounded-xl p-5 border border-gray-200 dark:border-zinc-800 border-b-4 border-b-yellow-400 lift-card-subtle shadow-sm dark:shadow-none">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500 dark:text-zinc-400">Pending Action</p>
+                                    <h3 id="pendingCount"
+                                        class="text-3xl font-bold text-slate-800 dark:text-gray-100 mt-1">0</h3>
+                                </div>
+                                <div
+                                    class="w-10 h-10 rounded quirky-border bg-yellow-50 dark:bg-amber-900/20 text-yellow-600 dark:text-amber-400 flex items-center justify-center">
+                                    <i class="fa-regular fa-clock"></i>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-zinc-400 mt-4">Require IT department review</p>
+                        </div>
+
+                        <div
+                            class="bg-white dark:bg-zinc-900 rounded-xl p-5 border border-gray-200 dark:border-zinc-800 lift-card shadow-sm dark:shadow-none flex flex-col justify-between">
+                            <div class="flex justify-between items-center mb-2">
+                                <p class="text-sm font-medium text-slate-500 dark:text-zinc-400">Resolved</p>
+                                <span
+                                    class="text-xs font-bold px-2 py-1 bg-green-100 dark:bg-emerald-900/20 text-green-700 dark:text-emerald-400 rounded-md">Good</span>
+                            </div>
+                            <div class="flex items-end gap-3">
+                                <h3 id="resolvedCount" class="text-3xl font-bold text-slate-800 dark:text-gray-100">0
+                                </h3>
+                                <p
+                                    class="text-sm text-slate-500 dark:text-zinc-400 mb-1 border-l pl-2 border-gray-200 dark:border-zinc-700">
+                                    Last 30 days</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                        <div
+                            class="lg:col-span-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm dark:shadow-none overflow-hidden">
+                            <div
+                                class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800 relative flex justify-between items-center">
+                                <div
+                                    class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-600 to-transparent">
+                                </div>
+                                <h3 class="font-semibold text-slate-800 dark:text-gray-100 mt-1">Recent Tickets</h3>
+
+                                <div class="relative">
+                                    <button onclick="toggleFilterMenu()"
+                                        class="flex items-center gap-2 text-[12px] font-medium border border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors btn-press">
+                                        <i class="fa-solid fa-filter"></i> Filter
+                                    </button>
+                                    <div id="filterMenu"
+                                        class="hidden absolute right-0 mt-2 w-32 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md shadow-lg z-50 overflow-hidden">
+
+                                        <div onclick="applyFilter('ALL')"
+                                            class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700">
+                                            All</div>
+
+                                        <div onclick="applyFilter('PENDING')"
+                                            class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700">
+                                            Pending</div>
+
+                                        <div onclick="applyFilter('RESOLVED')"
+                                            class="px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700">
+                                            Resolved</div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse" id="tickets-table">
+                                    <thead>
+                                        <tr
+                                            class="bg-gray-50/50 dark:bg-zinc-900/50 text-xs uppercase tracking-wider text-slate-500 dark:text-zinc-400 font-semibold border-b border-gray-200 dark:border-zinc-800">
+                                            <th class="px-6 py-3 w-24">ID</th>
+                                            <th class="px-6 py-3">Issue Description</th>
+                                            <th class="px-6 py-3 w-32">Status</th>
+                                            <th class="px-6 py-3 w-32">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentTableBody"
+                                        class="divide-y divide-gray-100 dark:divide-zinc-800/50 text-sm">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-6">
+
+                            <div
+                                class="bg-gradient-to-br from-indigo-600 to-indigo-900 dark:from-indigo-800 dark:to-zinc-900 rounded-xl p-6 text-white shadow-md relative overflow-hidden group">
+                                <div
+                                    class="absolute -right-6 -top-6 w-24 h-24 rounded-full border-4 border-white/10 group-hover:scale-110 transition-transform duration-500">
+                                </div>
+                                <div
+                                    class="absolute right-12 top-10 w-8 h-8 rounded-full bg-white/10 group-hover:-translate-y-2 transition-transform duration-500">
+                                </div>
+
+                                <h3 class="font-semibold text-lg mb-2 relative z-10">Facing an issue?</h3>
+                                <p class="text-sm text-indigo-100 dark:text-gray-300 mb-5 relative z-10 font-light">
+                                    Submit a ticket and our IT or maintenance staff will resolve it within 24 hours.</p>
+
+                                <button onclick="window.location.href='add-complaint.html'"
+                                    class="w-full bg-white dark:bg-zinc-800 text-indigo-900 dark:text-gray-100 font-semibold py-2.5 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors btn-press relative z-10 border dark:border-zinc-600">
+                                    File a Complaint
+                                </button>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm dark:shadow-none flex-1">
+                                <h3 class="font-semibold text-slate-800 dark:text-gray-100 mb-4 text-sm">System Updates
+                                </h3>
+
+                                <div id="systemUpdatesContainer" class="space-y-4 relative">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reports-view" class="view-section">
+                    <div
+                        class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-6 shadow-sm dark:shadow-none">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">My Activity Analytics</h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-4">Tickets by
+                                    Category</h4>
+                                <div id="reportCategoryContainer" class="space-y-4"></div>
+                            </div>
+
+                            <div
+                                class="flex flex-col justify-center items-center text-center p-4 bg-gray-50 dark:bg-zinc-950 rounded-lg border border-gray-100 dark:border-zinc-800">
+                                <div
+                                    class="w-24 h-24 rounded-full border-8 border-gray-300 dark:border-zinc-700 border-t-gray-200 dark:border-t-zinc-700 flex items-center justify-center mb-4">
+                                    <span id="resolutionText"
+                                        class="text-2xl font-bold text-gray-800 dark:text-white">0/0</span>
+                                </div>
+                                <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-300">Resolution Success
+                                </h4>
+                                <p id="resolutionDesc" class="text-xs text-gray-500 dark:text-zinc-500 mt-2">
+                                    0 out of 0 tickets have been resolved.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+
+
+        const sidebar = document.getElementById('sidebar');
+
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                mobileOverlay.classList.remove('hidden');
+                setTimeout(() => mobileOverlay.classList.add('opacity-100'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                mobileOverlay.classList.remove('opacity-100');
+                setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+            }
+        }
+
+        sidebarToggle.addEventListener('click', toggleSidebar);
+        mobileOverlay.addEventListener('click', toggleSidebar);
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-[#f1f5fb]', 'dark:bg-zinc-800', 'text-indigo-600', 'dark:text-indigo-300');
+                el.classList.add('text-slate-500', 'dark:text-gray-400');
+                const indicator = el.querySelector('span.bg-indigo-600');
+                if (indicator) indicator.remove();
+            });
+
+            element.classList.add('bg-[#f1f5fb]', 'dark:bg-zinc-800', 'text-indigo-600', 'dark:text-indigo-300');
+            element.classList.remove('text-slate-500', 'dark:text-gray-400');
+            element.innerHTML = `<span class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 dark:bg-indigo-400 rounded-r-md"></span>` + element.innerHTML;
+
+            const titles = { 'dashboard-view': 'Overview', 'reports-view': 'My Reports' };
+            document.getElementById('header-title').innerText = titles[viewId];
+        }
+
+        function searchTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.querySelectorAll("#tickets-table tbody tr");
+            rows.forEach(row => {
+                const textElements = row.querySelectorAll('.search-text');
+                let found = false;
+                textElements.forEach(el => { if (el.innerText.toLowerCase().includes(input)) found = true; });
+                row.style.display = found ? "" : "none";
+            });
+        }
+
+        function toggleFilterMenu() {
+            document.getElementById('filterMenu').classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('filterMenu');
+            const isClickInside = menu.contains(event.target) || event.target.closest('button[onclick="toggleFilterMenu()"]');
+            if (!isClickInside && !menu.classList.contains('hidden')) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        function applyFilter(status) {
+            const rows = document.querySelectorAll(".filter-row");
+
+            rows.forEach(row => {
+                const badgeText = row.querySelector('.status-badge')
+                    .innerText.trim().toUpperCase();
+
+                if (status === 'ALL') {
+                    row.style.display = '';
+                } else {
+                    row.style.display = (badgeText === status) ? '' : 'none';
+                }
+            });
+
+            document.getElementById('filterMenu').classList.add('hidden');
+        }
+
+        function toggleNotifications() {
+
+            document.getElementById('notif-dropdown').classList.toggle('show');
+
+            const badge = document.getElementById("notifCount");
+
+            localStorage.setItem(
+                "lastSeenNotificationCount",
+                localStorage.getItem("totalNotificationCount") || "0"
+            );
+
+            badge.classList.add("hidden");
+        }
+
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('notif-dropdown');
+            const isClickInside = menu.contains(event.target) || event.target.closest('button[onclick="toggleNotifications()"]');
+            if (!isClickInside && menu.classList.contains('show')) {
+                menu.classList.remove('show');
+            }
+        });
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // DEFAULT LIGHT MODE
+        // FORCE LIGHT MODE DEFAULT
+        const savedTheme = localStorage.getItem('theme');
+
+        document.documentElement.classList.remove('dark');
+
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+
+            setTimeout(() => {
+
+                if (sessionStorage.getItem("loginSuccess") === "true") {
+
+                    showToast("Login Successful");
+
+                    sessionStorage.removeItem("loginSuccess");
+                }
+                if (sessionStorage.getItem("complaintAdded") === "true") {
+
+                    showToast("Complaint Added Successfully");
+
+                    sessionStorage.removeItem("complaintAdded");
+                }
+
+            }, 500);
+
+            loadDashboardData();
+            loadNotifications();
+
+            setInterval(loadDashboardData, 10000);
+            setInterval(loadNotifications, 5000);
+        });
+
+        function loadDashboardData() {
+
+
+            fetch("/api/complaints")
+                .then(res => res.json())
+                .then(data => {
+
+                    const user = JSON.parse(sessionStorage.getItem("user") || "null");
+
+                    const userComplaints = data.filter(c =>
+                        c.userEmail === user?.email
+                    );
+
+                    // ✅ Counts
+                    const total = userComplaints.length;
+
+                    const pending = userComplaints.filter(c => {
+                        if (!c.status) return false;
+                        return c.status.toUpperCase() === "PENDING";
+                    }).length;
+
+                    const resolved = userComplaints.filter(c => {
+                        return c.status.toLowerCase() === "resolved";
+                    }).length;
+
+                    document.getElementById("totalCount").innerText = total;
+                    document.getElementById("pendingCount").innerText = pending;
+                    document.getElementById("resolvedCount").innerText = resolved;
+
+
+
+                    const countEl = document.getElementById("myTicketCount");
+                    if (countEl) {
+                        countEl.innerText = userComplaints.length;
+                    }
+
+                    // ✅ Recent Table
+                    const tbody = document.getElementById("recentTableBody");
+                    tbody.innerHTML = "";
+
+                    const recent = userComplaints.slice(-5).reverse();
+                    console.log(recent);
+                    recent.forEach((c, index) => {
+
+
+                        tbody.innerHTML += `
+       <tr class="filter-row hover:bg-[#f1f5fb] dark:hover:bg-zinc-800/50 cursor-pointer"
+    onclick="window.location.href='ticket-details.html?id=${c.id}'">
+    <td class="px-6 py-4 text-xs search-text">#TKT-${c.id}</td>
+
+    <td class="px-6 py-4 search-text">
+${escapeHtml((c.title || "").toLowerCase().replace(/\b\w/g, l => l.toUpperCase()))}
+</td>
+    
+    <td class="px-6 py-4">
+        <span class="status-badge search-text">${escapeHtml(c.status)}</span>
+    
+        </td>
+
+            <td class="px-6 py-4 text-xs">
+                ${new Date(c.date || Date.now()).toLocaleDateString()}
+            </td>
+        </tr>
+    `;
+                    });
+                    // ✅ System Updates (Dynamic)
+                    const updatesContainer = document.getElementById("systemUpdatesContainer");
+                    if (updatesContainer) {
+                        updatesContainer.innerHTML = "";
+                    }
+
+                    // latest 3 updates
+                    const updates = userComplaints.slice(-3).reverse();
+
+                    updates.forEach(c => {
+                        updatesContainer.innerHTML += `
+        <div class="bg-white dark:bg-zinc-900 p-3 rounded-lg border border-gray-100 dark:border-zinc-700 shadow-sm">
+            <div class="flex justify-between mb-1">
+                <div class="font-medium text-xs text-slate-800 dark:text-gray-200">
+                    ${escapeHtml(c.status)}
+                </div>
+                <time class="text-[10px] text-gray-400 font-mono">
+                    ${new Date(c.createdAt).toLocaleDateString()}
+                </time>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-zinc-400">
+                ${escapeHtml((c.title || "").toLowerCase().replace(/\b\w/g, l => l.toUpperCase()))}
+            </div>
+        </div>
+    `;
+                    });
+                    // ✅ Resolution Success
+                    const resolutionEl = document.getElementById("resolutionText");
+
+                    if (resolutionEl) {
+
+
+                        const resolved = userComplaints.filter(c => {
+                            if (!c.status) return false;
+                            return c.status.toLowerCase() === "resolved";
+                        }).length;
+
+                        resolutionEl.innerText = `${resolved}/${total}`;
+
+
+                        const circle = resolutionEl.parentElement;
+
+                        // RESET ALL COLORS FIRST
+                        circle.classList.remove(
+                            "border-emerald-500",
+                            "border-yellow-500",
+                            "border-red-500",
+                            "border-t-gray-200",
+                            "dark:border-t-zinc-700"
+                        );
+
+                        if (total === 0) {
+                            // ✅ NO DATA → FULL GREY
+                            circle.classList.add("border-gray-300", "dark:border-zinc-700");
+                        }
+                        else if (resolved === total) {
+                            // ✅ ALL RESOLVED → GREEN FULL
+                            circle.classList.add("border-emerald-500");
+                        }
+                        else if (resolved === 0) {
+                            // ✅ NONE RESOLVED → YELLOW FULL
+                            circle.classList.add("border-yellow-500");
+                        }
+                        else {
+                            // ✅ PARTIAL → YELLOW + GAP
+                            circle.classList.add("border-yellow-500");
+                            circle.classList.add("border-t-gray-200", "dark:border-t-zinc-700");
+                        }
+                    }
+                    const descEl = document.getElementById("resolutionDesc");
+
+                    if (descEl) {
+                        descEl.innerText = `${resolved} out of ${total} tickets have been resolved.`;
+                    }
+                    // ✅ Growth %
+                    const now = new Date();
+
+                    const last7Days = userComplaints.filter(c => {
+                        if (!c.date) return false;
+                        const d = new Date(c.date);
+                        return (now - d) / (1000 * 60 * 60 * 24) <= 7;
+                    }).length;
+
+                    const prev7Days = userComplaints.filter(c => {
+                        if (!c.date) return false;
+                        const d = new Date(c.date);
+                        const days = (now - d) / (1000 * 60 * 60 * 24);
+                        return days > 7 && days <= 14;
+                    }).length;
+
+                    let percent = 0;
+
+                    if (prev7Days > 0) {
+                        percent = ((last7Days - prev7Days) / prev7Days) * 100;
+                    }
+
+                    percent = Math.round(percent);
+
+                    const el = document.getElementById("growthPercent");
+
+                    if (el) {
+                        el.style.display = "none";
+                    }
+                    const reportContainer = document.getElementById("reportCategoryContainer");
+
+                    if (reportContainer) {
+                        reportContainer.innerHTML = "";
+
+                        const user = JSON.parse(sessionStorage.getItem("user") || "null");
+
+                        const userComplaints = data.filter(c =>
+                            c.userEmail === user?.email
+                        );
+
+                        const total = userComplaints.length;
+                        // ✅ Report - Category Wise
+                        // category count
+                        const categoryMap = {};
+
+                        userComplaints.forEach(c => {
+                            const cat = c.category || "Other";
+                            categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+                        });
+
+                        // UI render
+                        Object.keys(categoryMap).forEach(cat => {
+                            const count = categoryMap[cat];
+                            const percent = Math.round((count / total) * 100);
+
+                            reportContainer.innerHTML += `
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span>${escapeHtml(cat)}</span>
+                    <span class="font-bold">${percent}%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-zinc-800 rounded-full h-2">
+                    <div class="bg-indigo-600 h-2 rounded-full" style="width: ${percent}%"></div>
+                </div>
+            </div>
+        `;
+                        });
+                    }
+                    document.getElementById('dashboard-skeletons').style.display = 'none';
+                    document.getElementById('dashboard-content').classList.remove('hidden');
+
+                    setTimeout(() => {
+                        document.getElementById('dashboard-content').classList.remove('opacity-0');
+                    }, 50);
+
+                    const loader = document.getElementById('initial-loader');
+
+                    if (loader) {
+                        loader.style.opacity = '0';
+                        setTimeout(() => loader.remove(), 200);
+                    }
+
+                });
+        }
+        function loadNotifications() {
+            fetch("/api/complaints")
+                .then(res => res.json())
+                .then(data => {
+
+                    const badge = document.getElementById("notifCount");
+                    const dropdown = document.getElementById("notif-dropdown");
+
+
+                    let count = 0;
+                    let html = `
+            <div class="px-4 py-2 border-b font-semibold text-sm">
+                Notifications
+            </div>
+        `;
+
+
+                    const currentUser = JSON.parse(sessionStorage.getItem("user") || "null");
+
+                    if (!currentUser) {
+                        return;
+                    }
+                    data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                    data.forEach(c => {
+
+                        if (c.userEmail !== currentUser.email) {
+                            return;
+                        }
+
+                        // RESOLVED
+                        if (c.status && c.status.toLowerCase() === "resolved") {
+                            html += `
+    <div class="p-3 border-b text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800"
+         onclick="window.location.href='ticket-details.html?id=${c.id}'">
+        ✅ Complaint "${escapeHtml(c.title)}" resolved
+    </div>
+`;
+                            count++;
+                        }
+
+                        // COMMENT
+                        if (c.hasComment) {
+                            html += `
+    <div class="p-3 border-b text-xs cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-800"
+         onclick="window.location.href='ticket-details.html?id=${c.id}'">
+        💬 Admin commented on "${escapeHtml(c.title)}"
+    </div>
+`;
+                            count++;
+                        }
+                    });
+                    localStorage.setItem("totalNotificationCount", count);
+                    if (count === 0) {
+
+                        html += `
+        <div class="p-4 text-center text-gray-500 text-sm">
+            No notifications
+        </div>
+    `;
+                    }
+
+                    dropdown.innerHTML = html;
+                    const lastSeen =
+                        parseInt(localStorage.getItem("lastSeenNotificationCount") || "0");
+
+                    const unread = count - lastSeen;
+
+                    if (unread > 0) {
+
+                        badge.innerText = unread;
+
+                        badge.classList.remove("hidden");
+
+                    } else {
+
+                        badge.classList.add("hidden");
+                    }
+
+                })
+                .catch(err => {
+                    console.log("Notification Error:", err);
+
+                    const badge = document.getElementById("notifCount");
+                    if (badge) badge.classList.add("hidden");
+                });
+        }
+
+
+        function logout() {
+            sessionStorage.removeItem("user");
+            serverLogout().finally(() => {
+                sessionStorage.setItem("logoutSuccess", "true");
+                window.location.replace("index.html");
+            });
+        }
+
+        if (user && user.name) {
+
+            document.getElementById("username").innerText = user.name;
+
+            document.getElementById("userAvatar").src =
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=cbd5e1&color=334155`;
+        }
+
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script>
+        function showToast(message, success = true) {
+            Toastify({
+                text: message,
+                duration: 3000,
+                gravity: "bottom",
+                position: "right",
+                close: true,
+                stopOnFocus: true,
+                style: {
+                    background: success
+                        ? "linear-gradient(to right, #00b09b, #96c93d)"
+                        : "linear-gradient(to right, #ff416c, #ff4b2b)"
+                }
+            }).showToast();
+        }
+    </script>
+</body>
+
+</html>

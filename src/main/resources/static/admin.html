@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <script src="common.js"></script>
+    <link rel="stylesheet" href="tailwind.css">
+
+    <script>
+        const user = JSON.parse(sessionStorage.getItem("user"));
+
+        if (!user || user.role !== "ADMIN") {
+            window.location.href = "index.html";
+        }
+
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - UniDesk IT</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    
+    
+
+    <style>
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+        }
+
+        #notification-toast {
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 9999;
+        }
+
+        #notification-toast.show-toast {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .btn-press:active {
+            transform: scale(0.96);
+            transition: transform 0.1s;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            transform: scale(0.9) translateY(20px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-[#f4f5f7] dark:bg-zinc-950 text-gray-800 dark:text-gray-200 min-h-screen overflow-x-hidden flex font-sans">
+
+    <aside
+        class="fixed inset-y-0 left-0 z-40 w-[260px] bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 flex flex-col hidden md:flex">
+        <div class="h-[75px] px-6 flex items-center border-b border-gray-100 dark:border-zinc-800">
+            <div class="flex items-center gap-2">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-400 text-white flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-graduation-cap text-sm"></i>
+                </div>
+                <h1 class="text-xl font-bold text-[#3b5278] dark:text-gray-100 tracking-tight">
+                    UniSupport Admin
+                </h1>
+            </div>
+        </div>
+
+        <nav class="flex-1 pt-6 pb-4 px-3 space-y-1">
+            <p class="px-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Management</p>
+            <a href="#" onclick="switchView('records-view', this)"
+                class="nav-btn w-full px-3 py-2.5 rounded-md flex items-center bg-blue-50 dark:bg-zinc-800 text-blue-700 dark:text-indigo-300 font-medium text-sm transition-colors">
+                <i class="fa-solid fa-database w-6 text-center"></i> Master Records
+            </a>
+            <a href="#" onclick="switchView('users-view', this)"
+                class="nav-btn w-full px-3 py-2.5 rounded-md flex items-center text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 font-medium text-sm transition-colors">
+                <i class="fa-solid fa-users w-6 text-center"></i> User Directory
+            </a>
+
+            <div class="my-5 border-t border-gray-100 dark:border-zinc-800"></div>
+            <p class="px-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">System</p>
+            <a href="#" onclick="switchView('analytics-view', this)"
+                class="nav-btn w-full px-3 py-2.5 rounded-md flex items-center text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 font-medium text-sm transition-colors">
+                <i class="fa-solid fa-chart-line w-6 text-center"></i> Analytics
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-9 h-9 rounded bg-rose-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                    AD</div>
+                <div class="flex-1 min-w-0">
+                    <p id="adminName" class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">Admin</p>
+                    <a href="#" onclick="logout()"
+                        class="text-xs text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 font-medium transition-colors">
+                        Logout <i class="fa-solid fa-right-from-bracket ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 md:ml-[260px] flex flex-col min-h-screen">
+
+        <header
+            class="h-[75px] bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30">
+            <h2 id="header-title" class="text-lg font-bold text-gray-800 dark:text-gray-100">Master Records</h2>
+            <div class="flex items-center gap-3">
+                <div
+                    class="hidden md:flex items-center border border-gray-200 dark:border-zinc-700 rounded-md px-3 py-1.5 bg-gray-50 dark:bg-zinc-950 focus-within:border-indigo-500 transition-colors">
+                    <i class="fa-solid fa-search text-gray-400 dark:text-zinc-500 text-sm mr-2"></i>
+                    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Search..."
+                        class="bg-transparent border-none outline-none text-[13px] text-gray-700 dark:text-gray-200 w-48">
+
+                </div>
+                <select id="statusFilter" onchange="applyAdminFilter()"
+                    class="px-3 py-1.5 border border-gray-200 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900">
+                    <option value="ALL">All</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="RESOLVED">Resolved</option>
+                </select>
+                <button onclick="toggleTheme()"
+                    class="w-9 h-9 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 border border-transparent dark:border-zinc-700 transition-colors btn-press"><i
+                        id="theme-icon" class="fa-solid fa-moon"></i></button>
+            </div>
+        </header>
+        <div id="records-view" class="view-section active">
+            <div class="grid grid-cols-4 gap-6 mb-6">
+
+                <div
+                    class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-5 border-l-4 border-l-rose-500 shadow-sm">
+                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-2">Total</p>
+                    <h3 id="total" class="text-3xl font-bold text-rose-600">0</h3>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-5 border-l-4 border-l-amber-500 shadow-sm">
+                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-2">Pending</p>
+                    <h3 id="pending" class="text-3xl font-bold text-amber-500">0</h3>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-5 border-l-4 border-l-emerald-500 shadow-sm">
+                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-2">Resolved</p>
+                    <h3 id="resolved" class="text-3xl font-bold text-emerald-600">0</h3>
+                </div>
+
+                <div class="flex items-center justify-center">
+                    <div id="circle"
+                        style="width:100px;height:100px;border-radius:50%;background:#ddd;display:flex;align-items:center;justify-content:center;">
+                        <span id="percentText">0%</span>
+                    </div>
+                </div>
+
+            </div>
+            <div
+                class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200 dark:border-zinc-800">
+                    <h3 class="text-base font-bold">Complaints Log</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-[14px]" id="admin-table">
+                        <thead
+                            class="text-[12px] text-gray-500 dark:text-zinc-400 font-semibold border-b border-gray-200 dark:border-zinc-800">
+                            <tr>
+                                <th class="px-6 py-4">Student Info</th>
+                                <th class="px-6 py-4">Title</th>
+                                <th class="px-6 py-4">Issue Date</th>
+                                <th class="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody" class="divide-y divide-gray-100 dark:divide-zinc-800/50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="users-view" class="view-section">
+            <div
+                class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg shadow-sm overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-black/20">
+                    <h3 class="text-base font-bold">
+                        Registered Students (<span id="studentCount">0</span>)
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-[14px]" id="users-table">
+                        <thead
+                            class="text-[12px] text-gray-500 dark:text-zinc-400 border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-black/40">
+                            <tr>
+                                <th class="px-6 py-4">Name & Email</th>
+                                <th class="px-6 py-4">Department</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y divide-gray-100 dark:divide-zinc-800/50"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="analytics-view" class="view-section">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div
+                    class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-6 shadow-sm">
+                    <h3 class="text-base font-bold mb-6">Tickets by Department</h3>
+                    <div id="reportCategoryContainer" class="space-y-6"></div>
+                </div>
+                <div
+                    class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-6 shadow-sm flex flex-col items-center justify-center">
+
+                    <h3 class="text-base font-bold self-start mb-6">Resolution Rate</h3>
+
+                    <div class="relative w-[120px] h-[120px] flex items-center justify-center">
+
+                        <!-- Circle -->
+                        <div id="resolutionCircle" class="absolute inset-0 rounded-full">
+                        </div>
+
+                        <!-- Center Text -->
+                        <span id="resolutionText" class="text-xl font-bold z-10">0%</span>
+
+                    </div>
+
+                    <!-- Description -->
+                    <p id="resolutionDesc" class="text-xs mt-2 text-gray-500 text-center"></p>
+
+                </div>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <div id="commentModal"
+        class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div
+            class="modal-content bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-zinc-800">
+            <div
+                class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-gray-50/50 dark:bg-zinc-950/50">
+                <h3 class="font-bold text-lg">Add Admin Comment</h3>
+                <button onclick="closeCommentModal()"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-gray-500 mb-4">Request missing information or leave a note on this complaint.</p>
+                <textarea id="admin-comment-text" rows="4"
+                    class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-700 rounded-md px-3 py-2 outline-none focus:border-indigo-500 text-sm"
+                    placeholder="e.g. Please provide a photo of the issue or your room number..."></textarea>
+            </div>
+            <div
+                class="px-6 py-4 bg-gray-50 dark:bg-zinc-950/50 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3">
+                <button onclick="closeCommentModal()"
+                    class="text-sm font-medium text-gray-600 dark:text-gray-400">Cancel</button>
+                <button onclick="saveComment()"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-bold shadow-md hover:bg-blue-700 btn-press">Send
+                    Comment</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModalOverlay"
+        class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div
+            class="modal-content bg-white dark:bg-zinc-900 w-full max-w-md rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-zinc-800">
+            <div
+                class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-gray-50/50 dark:bg-zinc-950/50">
+                <h3 class="font-bold text-lg">Edit Student Info</h3>
+                <button onclick="closeModal()"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name</label><input
+                        type="text" id="edit-name"
+                        class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-700 rounded-md px-3 py-2 outline-none focus:border-indigo-500">
+                </div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label><input
+                        type="email" id="edit-email"
+                        class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-700 rounded-md px-3 py-2 outline-none focus:border-indigo-500">
+                </div>
+                <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label><select
+                        id="edit-status"
+                        class="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-700 rounded-md px-3 py-2 outline-none">
+                        <option value="Active">Active</option>
+                        <option value="Suspended">Suspended</option>
+                    </select></div>
+            </div>
+            <div
+                class="px-6 py-4 bg-gray-50 dark:bg-zinc-950/50 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3">
+                <button onclick="closeModal()" class="text-sm font-medium text-gray-500">Cancel</button><button
+                    onclick="saveUser()"
+                    class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-bold shadow-md hover:bg-indigo-700 btn-press">Save
+                    Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification-toast"
+        class="fixed bottom-6 right-6 flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xl">
+        <i id="toast-icon" class="fa-solid fa-check-circle text-emerald-500"></i><span id="toast-msg"
+            class="text-[14px] font-medium">Success</span>
+    </div>
+
+    <script>
+
+
+        window.addEventListener("pageshow", function (event) {
+            if (event.persisted) {
+                const user = JSON.parse(sessionStorage.getItem("user") || "null");
+                if (!user || !user.email) {
+                    window.location.replace("index.html");
+                }
+            }
+        });
+        let currentTicketId = null;
+        let expandedRows = new Set();
+
+        // Comment Logic
+        function openCommentModal(ticketId) {
+            currentTicketId = ticketId;
+            document.getElementById('admin-comment-text').value = "";
+            document.getElementById('commentModal').classList.add('show');
+        }
+
+        function closeCommentModal() {
+            document.getElementById('commentModal').classList.remove('show');
+        }
+
+        function saveComment() {
+            const comment = document.getElementById('admin-comment-text').value;
+
+            if (comment.trim() !== "") {
+
+                fetch(`/api/complaints/${currentTicketId}/comment`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ comment: comment.trim() })
+                })
+                    .then(res => {
+                        if (!res.ok) {
+                            return res.json().catch(() => ({})).then(b => { throw new Error(b.error || "Failed"); });
+                        }
+                        document.getElementById('comment-tag-' + currentTicketId).classList.remove('hidden');
+                        closeCommentModal();
+                        showToast('Comment sent to user');
+                    })
+                    .catch(err => showToast(err.message || 'Could not save comment'));
+            } else {
+                showToast('Please enter comment');
+            }
+        }
+
+        // SPA View Switching
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-blue-50', 'dark:bg-zinc-800', 'text-blue-700', 'dark:text-indigo-300');
+                el.classList.add('text-gray-600', 'dark:text-gray-400');
+            });
+            element.classList.add('bg-blue-50', 'dark:bg-zinc-800', 'text-blue-700', 'dark:text-indigo-300');
+            const titles = { 'records-view': 'Master Records', 'users-view': 'User Directory', 'analytics-view': 'Analytics' };
+            document.getElementById('header-title').innerText = titles[viewId];
+            if (viewId === "records-view") {
+                loadAdminComplaints();
+            }
+        }
+
+        // Search and User Edits (Existing Logic retained)
+        function searchTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const activeView = document.querySelector('.view-section.active').id;
+            let tableId = (activeView === 'records-view') ? 'admin-table' : 'users-table';
+            const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+            rows.forEach(row => {
+                const textItems = row.querySelectorAll('.search-item');
+                let found = false;
+                textItems.forEach(item => { if (item.innerText.toLowerCase().includes(input)) found = true; });
+                row.style.display = found ? "" : "none";
+            });
+        }
+
+        function editUser(userId) {
+            currentEditingId = userId;
+            const row = document.getElementById(userId);
+            document.getElementById('edit-name').value = row.querySelector('.name-field').innerText;
+            document.getElementById('edit-email').value = row.querySelector('.email-field').innerText;
+            document.getElementById('edit-status').value = row.querySelector('.status-field').innerText;
+            document.getElementById('editModalOverlay').classList.add('show');
+        }
+
+        function closeModal() { document.getElementById('editModalOverlay').classList.remove('show'); }
+
+        function saveUser() {
+            const row = document.getElementById(currentEditingId);
+            const newStatus = document.getElementById('edit-status').value;
+            row.querySelector('.name-field').innerText = document.getElementById('edit-name').value;
+            row.querySelector('.email-field').innerText = document.getElementById('edit-email').value;
+            const badge = row.querySelector('.status-field');
+            badge.innerText = newStatus;
+            badge.className = `status-pill px-2 py-1 text-[10px] rounded uppercase font-bold status-field ${newStatus === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`;
+            closeModal(); showToast('User updated!');
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) { html.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
+            else { html.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
+        }
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+
+        function showToast(message) {
+            const toast = document.getElementById('notification-toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.classList.add('show-toast');
+            setTimeout(() => toast.classList.remove('show-toast'), 3000);
+        }
+        function viewDetails(title, description, category, priority, date, comment) {
+
+            alert(
+                "Title: " + title + "\n\n" +
+                "Description: " + description + "\n\n" +
+                "Category: " + category + "\n" +
+                "Priority: " + priority + "\n" +
+                "Date: " + date +
+                "\n\nAdmin Comment: " + (comment || "No Comment")
+            );
+        }
+        async function loadUsers() {
+
+    const res = await fetch("/api/admin/users");
+    const users = await res.json();
+
+    const tbody = document.getElementById("usersTableBody");
+
+    document.getElementById("studentCount").innerText =
+        users.filter(u => u.role === "USER").length;
+
+    tbody.innerHTML = "";
+
+    users
+        .filter(u => u.role === "USER")
+        .forEach(user => {
+
+            tbody.innerHTML += `
+            <tr>
+                <td class="px-6 py-4">
+                    <div class="font-medium">${escapeHtml(user.name)}</div>
+                    <div class="text-xs text-gray-500">${escapeHtml(user.email)}</div>
+                </td>
+
+                <td class="px-6 py-4">CSE</td>
+
+                <td class="px-6 py-4">
+                    <span class="text-green-600 font-medium">
+                        Active
+                    </span>
+                </td>
+
+                <td class="px-6 py-4 text-right">
+                    -
+                </td>
+            </tr>
+            `;
+        });
+}
+
+        function resolveTicket(id) {
+            fetch(`/api/complaints/${id}?status=RESOLVED`, {
+                method: "PUT"
+            })
+                .then(() => {
+                    showToast('Resolved!');
+                    loadAdminComplaints(); // refresh
+
+                });
+        }
+        function loadAdminComplaints() {
+            fetch("/api/complaints")
+                .then(res => res.json())
+                .then(data => {
+                    // ===== RESOLUTION CALCULATION =====
+                    const total = data.length;
+
+                    const resolved = data.filter(c => {
+                        if (!c.status) return false;
+                        return c.status.toUpperCase() === "RESOLVED";
+                    }).length;
+
+                    // FIXED percent
+                    const percent = total === 0 ? 0 : Math.round((resolved / total) * 100);
+
+                    // TEXT
+                    document.getElementById("resolutionText").innerText = percent + "%";
+
+                    document.getElementById("resolutionDesc").innerText =
+                        `${resolved} out of ${total} tickets resolved`;
+
+                    // COLOR (no error now)
+                    const color = total === 0
+                        ? "#e5e7eb"
+                        : percent === 100 ? "#10b981"
+                            : percent === 0 ? "#ef4444"
+                                : "#f59e0b";
+
+                    // APPLY
+                    const circle = document.getElementById("resolutionCircle");
+
+                    circle.style.background = total === 0
+                        ? "conic-gradient(#e5e7eb 100%)"
+                        : `conic-gradient(${color} ${percent}%, #e5e7eb ${percent}%)`;
+
+                    circle.style.webkitMask = "radial-gradient(farthest-side, transparent 60%, black 61%)";
+                    circle.style.mask = "radial-gradient(farthest-side, transparent 60%, black 61%)";
+                    // ===== TOP STATS FIX =====
+                    const pending = data.filter(c => {
+                        if (!c.status) return false;
+                        return c.status.toUpperCase() === "PENDING";
+                    }).length;
+
+                    document.getElementById("total").innerText = total;
+                    document.getElementById("pending").innerText = pending;
+                    document.getElementById("resolved").innerText = resolved;
+
+
+                    // ===== CIRCLE FIX =====
+
+
+                    document.getElementById("circle").style.background =
+                        total === 0
+                            ? "conic-gradient(#ddd 100%)"
+                            : `conic-gradient(${color} ${percent}%, #ddd ${percent}%)`;
+
+                    document.getElementById("percentText").innerText = Math.round(percent) + "%";
+
+
+                    // ===== CATEGORY STATS =====
+                    const container = document.getElementById("reportCategoryContainer");
+
+                    if (container) {
+                        container.innerHTML = "";
+
+                        const categoryMap = {};
+                        data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                        data.forEach(c => {
+                            const cat = c.category || "Other";
+                            categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+                        });
+
+                        Object.keys(categoryMap).forEach(cat => {
+                            const count = categoryMap[cat];
+                            const percent = total === 0 ? 0 : Math.round((count / total) * 100);
+
+                            container.innerHTML += `
+            <div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span>${escapeHtml(cat)}</span>
+                    <span class="font-bold">${percent}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-indigo-600 h-2 rounded-full" style="width:${percent}%"></div>
+                </div>
+            </div>
+        `;
+                        });
+                    }
+
+                    const table = document.getElementById("adminTableBody");
+                    table.innerHTML = "";
+
+                    data.forEach(c => {
+
+                        let statusColor = "bg-amber-50 text-amber-700";
+                        if (c.status === "RESOLVED") statusColor = "bg-emerald-50 text-emerald-700";
+
+                        const row = `
+<tr class="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors" id="ticket-${c.id}">
+    
+    <!-- ✅ STUDENT INFO -->
+    <td class="px-6 py-4">
+        <p class="font-semibold search-item">
+            ${escapeHtml(c.userName || c.userEmail || "No Name")}
+        </p>
+
+        <p class="text-xs text-gray-500">
+            #TKT-${c.id}
+        </p>
+    </td>
+
+    <!-- ✅ TITLE -->
+    <td class="px-6 py-4 cursor-pointer" onclick="toggleDetails(${c.id})">
+        <p class="font-medium search-item">
+${escapeHtml((c.title || "").toLowerCase().replace(/\b\w/g, l => l.toUpperCase()))}
+</p>
+
+        <div class="flex items-center gap-2">
+            <span class="status-badge px-2.5 py-1 text-[10px] rounded border ${statusColor}">
+                ${escapeHtml(c.status)}
+            </span>
+        </div>
+
+        <p id="comment-tag-${c.id}" class="text-xs text-blue-500 hidden">
+            Comment added
+        </p>
+    </td>
+
+    <!-- ✅ ISSUE DATE (NEW COLUMN) -->
+    <td class="px-6 py-4 text-xs text-gray-500">
+        ${new Date(c.createdAt).toLocaleDateString()}
+    </td>
+
+    <!-- ✅ ACTION -->
+    <td class="px-6 py-4 text-right">
+        <div class="flex justify-end gap-2">
+
+            <button onclick="openCommentModal(${c.id})" 
+                class="px-3 py-1.5 border border-gray-200 rounded-md text-[13px] hover:bg-blue-50">
+                💬
+            </button>
+
+            <button 
+                onclick="resolveTicket(${c.id})"
+                ${c.status === "RESOLVED" ? "disabled" : ""}
+                class="px-3 py-1.5 border border-gray-200 rounded-md text-[13px] 
+                ${c.status === "RESOLVED" ? "opacity-50 cursor-not-allowed" : "hover:bg-emerald-50"}">
+                
+                ✔ ${c.status === "RESOLVED" ? "Resolved" : "Resolve"}
+            </button>
+
+            <button onclick="deleteComplaint(${c.id})"
+                class="px-3 py-1.5 border border-red-200 text-red-600 rounded-md text-[13px] hover:bg-red-50">
+                🗑
+            </button>
+
+        </div>
+    </td>
+
+</tr>
+`;
+
+                        table.innerHTML += row;
+                    }
+                    );
+                });
+            applyAdminFilter();
+            setTimeout(() => {
+                expandedRows.forEach(id => {
+                    toggleDetails(id);
+                });
+            }, 100);
+
+        }
+        function toggleDetails(id) {
+            const existing = document.getElementById("detail-" + id);
+
+            if (existing) {
+                existing.remove();
+                expandedRows.delete(id);
+                return;
+            }
+
+            expandedRows.add(id);
+
+            fetch("/api/complaints")
+                .then(res => res.json())
+                .then(data => {
+                    const c = data.find(item => item.id === id);
+                    const row = document.getElementById("ticket-" + id);
+
+                    const detailRow = document.createElement("tr");
+                    detailRow.id = "detail-" + id;
+
+                    detailRow.innerHTML = `
+<td colspan="3" class="px-6 py-4 bg-gray-50 dark:bg-zinc-900">
+    <div class="text-sm space-y-2">
+        <p><b>Description:</b> ${escapeHtml(c.description)}</p>
+        <p><b>Category:</b> ${escapeHtml(c.category)}</p>
+        <p><b>Priority:</b> ${escapeHtml(c.priority)}</p>
+        <p><b>Date:</b> ${escapeHtml(c.createdAt)}</p>
+
+        ${c.hasComment ? `
+        <div class="mt-3 p-3 bg-indigo-50 dark:bg-zinc-800 border border-indigo-200 dark:border-zinc-700 rounded-lg">
+    <p class="font-semibold text-indigo-700 dark:text-indigo-400">
+        Admin Comment
+    </p>
+    <p class="mt-1 text-gray-700 dark:text-gray-200">
+        ${escapeHtml(c.adminComment)}
+    </p>
+</div>
+        ` : ''}
+    </div>
+</td>
+`;
+
+                    row.after(detailRow);
+                });
+        }
+        function deleteComplaint(id) {
+
+            fetch(`/api/complaints/${id}`, {
+                method: "DELETE"
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error("Delete failed");
+                    showToast("Complaint Deleted");
+                    loadAdminComplaints();
+                })
+                .catch(err => {
+                    console.log(err);
+                    showToast("Delete Failed", false);
+                });
+        }
+        function applyAdminFilter() {
+            const filter = document.getElementById("statusFilter").value;
+            const rows = document.querySelectorAll("#adminTableBody tr");
+
+            rows.forEach(row => {
+                const status = row.querySelector(".status-badge")?.innerText.replace(/\s+/g, "").toUpperCase();
+
+                if (filter === "ALL" || status === filter) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        }
+        const userData = JSON.parse(sessionStorage.getItem("user") || "null");
+
+
+        if (userData && userData.name) {
+            document.getElementById("adminName").innerText = userData.name;
+        }
+        window.addEventListener("DOMContentLoaded", () => {
+
+            loadAdminComplaints();
+            loadUsers();
+
+            if (sessionStorage.getItem("loginSuccess") === "true") {
+
+                setTimeout(() => {
+                    showToast("Login Successful");
+                    sessionStorage.removeItem("loginSuccess");
+                }, 500);
+
+            }
+
+        });
+
+        function logout() {
+            sessionStorage.removeItem("user");
+            serverLogout().finally(() => {
+                sessionStorage.setItem("logoutSuccess", "true");
+                window.location.replace("index.html");
+            });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script>
+        function showToast(message, success = true) {
+            Toastify({
+                text: message,
+                duration: 3000,
+                gravity: "bottom",
+                position: "right",
+                close: true,
+                stopOnFocus: true,
+                style: {
+                    background: success
+                        ? "linear-gradient(to right, #00b09b, #96c93d)"
+                        : "linear-gradient(to right, #ff416c, #ff4b2b)"
+                }
+            }).showToast();
+        }
+
+
+    </script>
+</body>
+
+</html>

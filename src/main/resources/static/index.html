@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <script src="common.js"></script>
+    <link rel="stylesheet" href="tailwind.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - UniSupport</title>
+    
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    
+    
+
+    <style>
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        * {
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+
+        .login-card {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.6s ease forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-input {
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .dark .form-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .role-btn {
+            transition: all 0.3s;
+        }
+
+        .role-btn.active {
+            background-color: white;
+            color: #4f46e5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .role-btn.active {
+            background-color: #3f3f46;
+            color: #818cf8;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-press {
+            transition: transform 0.15s, box-shadow 0.15s, background-color 0.2s;
+        }
+
+        .btn-press:active {
+            transform: scale(0.96);
+            box-shadow: none !important;
+        }
+
+        .expandable-field {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease;
+        }
+
+        .expandable-field.show {
+            max-height: 300px;
+            opacity: 1;
+            margin-bottom: 1.5rem;
+        }
+
+        #auth-toast {
+            transform: translateX(120%);
+            opacity: 0;
+            transition: all 0.4s ease cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        #auth-toast.show-toast {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-[#f8fafc] dark:bg-zinc-950 font-sans flex flex-col items-center justify-center min-h-screen relative overflow-x-hidden py-10">
+
+    <div id="auth-toast"
+        class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xl min-w-[300px]">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
+        <span id="toast-msg" class="text-sm font-medium text-gray-800 dark:text-gray-200">Message</span>
+    </div>
+
+    <button onclick="toggleTheme()"
+        class="fixed top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800/80 transition-colors shadow-sm btn-press z-50"
+        title="Toggle Dark Mode">
+        <i id="theme-icon" class="fa-solid fa-moon"></i>
+    </button>
+
+    <div class="w-full max-w-md p-6 relative z-10">
+
+        <div class="text-center mb-8 login-card" style="animation-delay: 0.1s;">
+            <h1 class="text-3xl font-bold tracking-tight text-indigo-900 dark:text-gray-100">Uni<span
+                    class="text-indigo-600 dark:text-indigo-400">Support</span></h1>
+            <p class="text-gray-500 dark:text-zinc-400 mt-2 text-sm font-medium">Campus Helpdesk Portal</p>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-900 p-8 rounded-2xl shadow-lg dark:shadow-none border border-gray-200 dark:border-zinc-800 login-card"
+            style="animation-delay: 0.2s;">
+
+            <h2 id="formTitle" class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6 text-center">Welcome Back
+            </h2>
+
+            <div id="roleContainer"
+                class="bg-gray-100 dark:bg-zinc-800 p-1 rounded-xl flex mb-6 transition-all duration-300">
+                <button type="button" id="btnStudent" onclick="setRole('student')"
+                    class="role-btn active flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400">Student</button>
+                <button type="button" id="btnAdmin" onclick="setRole('admin')"
+                    class="role-btn flex-1 py-2 rounded-lg text-sm font-medium text-gray-500 dark:text-gray-400">Admin</button>
+            </div>
+
+            <form onsubmit="handleSubmit(event)">
+
+                <div id="nameField" class="expandable-field">
+                    <label
+                        class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Full
+                        Name</label>
+                    <input type="text" id="fullname"
+                        class="form-input w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-gray-800 dark:text-gray-200">
+                </div>
+
+                <div class="mb-5">
+                    <label
+                        class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Email
+                        Address</label>
+                    <input type="email" id="email"
+                        class="form-input w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-gray-800 dark:text-gray-200"
+                        required>
+                </div>
+
+                <div id="passwordWrapper">
+                    <div class="mb-2">
+                        <label
+                            class="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">
+                            Password
+
+                            <span class="relative group cursor-pointer">
+                                <i class="fa-solid fa-circle-info text-indigo-500"></i>
+
+                                <span
+                                    class="hidden group-hover:block absolute left-5 top-0 z-50 w-56 p-3 rounded-lg bg-gray-900 text-white text-[11px] normal-case">
+                                    • At least 8 characters <br>
+                                    • Uppercase letter <br>
+                                    • Lowercase letter <br>
+                                    • Number
+                                </span>
+                            </span>
+
+                        </label>
+                        <input type="password" id="password" onkeyup="checkPasswordStrength()"
+                            class="form-input w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-gray-800 dark:text-gray-200"
+                            required>
+                    </div>
+
+                    <div id="forgotPwdLink" class="flex justify-end mb-6">
+                    </div>
+
+                    <div id="confirmPwdField" class="expandable-field">
+                        <label
+                            class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 uppercase tracking-wide">Confirm
+                            Password</label>
+                        <input type="password" id="confirmpassword"
+                            class="form-input w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-gray-800 dark:text-gray-200">
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn"
+                    class="w-full bg-indigo-600 dark:bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-500 shadow-md shadow-indigo-600/20 btn-press mt-2">
+                    Sign In
+                </button>
+            </form>
+
+            <p id="toggleText" class="text-center text-sm text-gray-500 dark:text-zinc-400 mt-6">
+                Don't have an account?
+                <button type="button" onclick="toggleAuthMode()"
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Sign up</button>
+            </p>
+
+            <p id="backToLoginText" class="text-center text-sm text-gray-500 dark:text-zinc-400 mt-6 hidden">
+            </p>
+        </div>
+
+        <div class="mt-8 text-center login-card" style="animation-delay: 0.3s;">
+            <div
+                class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-zinc-800/50 rounded-full border border-gray-200 dark:border-zinc-700/50">
+                <i class="fa-solid fa-headset text-indigo-500"></i>
+                <span class="text-xs font-medium text-gray-600 dark:text-gray-300">
+                    Need Help? Call <a href="tel:+919876543210"
+                        class="text-indigo-600 dark:text-indigo-400 hover:underline">+91 98765 43210</a> (IT Admin)
+                </span>
+            </div>
+        </div>
+
+    </div>
+
+    <div
+        class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl pointer-events-none z-0">
+    </div>
+    <div
+        class="fixed bottom-[-10%] right-[-10%] w-96 h-96 bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-3xl pointer-events-none z-0">
+    </div>
+
+    <script>
+        let currentRole = 'student';
+        let isSignUp = false;
+        let isForgotPassword = false;
+        let isPasswordValid = false;
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.getElementById('theme-icon').className = 'fa-solid fa-moon';
+        }
+
+        function setRole(role) {
+            currentRole = role;
+            document.getElementById('btnStudent').classList.toggle('active', role === 'student');
+            document.getElementById('btnAdmin').classList.toggle('active', role === 'admin');
+
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('auth-toast');
+            const icon = document.getElementById('toast-icon');
+
+            icon.className = type === 'error' ? 'fa-solid fa-circle-exclamation text-red-500 text-lg' : 'fa-solid fa-circle-check text-emerald-500 text-lg';
+            document.getElementById('toast-msg').innerText = message;
+
+            toast.classList.add('show-toast');
+            setTimeout(() => toast.classList.remove('show-toast'), 3000);
+        }
+        const user = JSON.parse(sessionStorage.getItem("user") || "null");
+        if (sessionStorage.getItem("logoutSuccess") === "true") {
+
+            setTimeout(() => {
+                showToast("Logged Out Successfully");
+                sessionStorage.removeItem("logoutSuccess");
+            }, 500);
+
+        }
+
+        const sessionNotice = sessionStorage.getItem("sessionNotice");
+        if (sessionNotice) {
+            sessionStorage.removeItem("sessionNotice");
+            setTimeout(() => {
+                showToast(sessionNotice === "changed"
+                    ? "Another account signed in on this browser. Please sign in again."
+                    : "Session expired. Please sign in again.", "error");
+            }, 500);
+        }
+
+        // Already logged in? Ask the server (the session cookie is the truth, not sessionStorage).
+        if (user && user.email && user.role) {
+            fetch("/api/auth/me")
+                .then(res => res.ok ? res.json() : null)
+                .then(me => {
+                    if (!me) {
+                        sessionStorage.removeItem("user");
+                        return;
+                    }
+                    sessionStorage.setItem("user", JSON.stringify(me));
+                    window.location.href = me.role === "ADMIN" ? "admin.html" : "dashboard.html";
+                })
+                .catch(() => { });
+        }
+
+        function checkPasswordStrength() {
+
+            if (!isSignUp && !isForgotPassword) return;
+
+            const pwd = document.getElementById('password').value;
+
+            const reqLength = pwd.length >= 8;
+            const reqUpper = /[A-Z]/.test(pwd);
+            const reqLower = /[a-z]/.test(pwd);
+            const reqNum = /[0-9]/.test(pwd);
+
+            isPasswordValid =
+                reqLength &&
+                reqUpper &&
+                reqLower &&
+                reqNum;
+        }
+
+       
+
+        // Forgot-password is disabled until an email-verified reset flow exists.
+        function toggleForgotPassword() { }
+
+        function toggleAuthMode() {
+            isSignUp = !isSignUp;
+            const nameField = document.getElementById('nameField');
+            const confirmPwdField = document.getElementById('confirmPwdField');
+         
+            const forgotPwdLink = document.getElementById('forgotPwdLink');
+            const roleContainer = document.getElementById('roleContainer');
+            const submitBtn = document.getElementById('submitBtn');
+            const toggleText = document.getElementById('toggleText');
+            const formTitle = document.getElementById('formTitle');
+
+            if (isSignUp) {
+                document.getElementById('forgotPwdLink')
+                    .classList.add('hidden');
+                nameField.classList.add('show');
+                document.getElementById('fullname').required = true;
+                confirmPwdField.classList.add('show');
+                document.getElementById('confirmpassword').required = true;
+                
+
+                forgotPwdLink.classList.add('hidden');
+                roleContainer.classList.add('hidden');
+                setRole('student');
+
+                formTitle.innerText = "Create an Account";
+                submitBtn.innerHTML = "Sign Up";
+                toggleText.innerHTML = `Already have an account? <button type="button" onclick="toggleAuthMode()" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Sign in</button>`;
+
+                checkPasswordStrength();
+            } else {
+                document.getElementById('forgotPwdLink')
+                    .classList.remove('hidden');
+                nameField.classList.remove('show');
+                document.getElementById('fullname').required = false;
+                confirmPwdField.classList.remove('show');
+                document.getElementById('confirmpassword').required = false;
+                
+
+                forgotPwdLink.classList.remove('hidden');
+                roleContainer.classList.remove('hidden');
+
+                formTitle.innerText = "Welcome Back";
+                submitBtn.innerHTML = "Sign In";
+                toggleText.innerHTML = `Don't have an account? <button type="button" onclick="toggleAuthMode()" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">Sign up</button>`;
+            }
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+
+            if (isSignUp || isForgotPassword) {
+
+                if (!isPasswordValid) {
+                    showToast("Please meet all password criteria.", "error");
+                    return;
+                }
+
+                const pwd = document.getElementById('password').value;
+                const confPwd = document.getElementById('confirmpassword').value;
+
+                if (pwd !== confPwd) {
+                    showToast("Passwords do not match!", "error");
+                    return;
+                }
+            }
+
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Processing...`;
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            if (isSignUp) {
+
+                fetch("/api/auth/signup", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        name: document.getElementById("fullname").value.trim(),
+                        email: email.trim(),
+                        password: password
+                    })
+                })
+                    .then(res => res.json().catch(() => ({})).then(body => ({ ok: res.ok, status: res.status, body })))
+                    .then(({ ok, status, body }) => {
+
+                        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+
+                        if (status === 409) {
+                            showToast("Email already registered", "error");
+                            btn.innerHTML = "Sign Up";
+                            return;
+                        }
+
+                        if (!ok) {
+                            showToast(body.error || "Signup Failed", "error");
+                            btn.innerHTML = "Sign Up";
+                            return;
+                        }
+
+                        showToast("Account created successfully");
+
+                        toggleAuthMode();
+
+                        document.getElementById("fullname").value = "";
+                        document.getElementById("email").value = "";
+                        document.getElementById("password").value = "";
+                        document.getElementById("confirmpassword").value = "";
+
+                        btn.innerHTML = "Sign In";
+                    })
+                    .catch(() => {
+                        showToast("Signup Failed", "error");
+                        btn.innerHTML = "Sign Up";
+                        btn.classList.remove('opacity-80', 'cursor-not-allowed');
+                    });
+
+                return;
+            }
+
+            fetch("/api/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email.trim(),
+                    password: password
+                })
+            })
+                .then(res => res.json().catch(() => null).then(body => ({ ok: res.ok, status: res.status, body })))
+                .then(({ ok, status, body }) => {
+
+                    btn.innerHTML = "Sign In";
+                    btn.classList.remove('opacity-80', 'cursor-not-allowed');
+
+                    if (status === 429) {
+                        showToast((body && body.error) || "Too many attempts. Try again later.", "error");
+                        return;
+                    }
+
+                    if (!ok || !body) {
+                        showToast("Invalid Username or Password", "error");
+                        return;
+                    }
+
+                    const user = body;
+
+                    // Wrong tab selected: end the server session that was just created.
+                    if (currentRole === "student" && user.role !== "USER") {
+                        serverLogout();
+                        showToast("Please login from Admin section", "error");
+                        return;
+                    }
+
+                    if (currentRole === "admin" && user.role !== "ADMIN") {
+                        serverLogout();
+                        showToast("Please login from Student section", "error");
+                        return;
+                    }
+
+                    // Only display info is kept in the browser (no password, no secrets).
+                    sessionStorage.setItem("user", JSON.stringify(user));
+                    sessionStorage.setItem("loginSuccess", "true");
+
+                    if (user.role && user.role.toUpperCase() === "ADMIN") {
+                        window.location.href = "admin.html";
+                    } else {
+                        window.location.href = "dashboard.html";
+                    }
+                })
+                .catch(() => {
+                    showToast("Server not reachable. Try again.", "error");
+                    btn.innerHTML = "Sign In";
+                    btn.classList.remove('opacity-80', 'cursor-not-allowed');
+                });
+        }
+    </script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+
+<head>
+    <script src="common.js"></script>
+    <link rel="stylesheet" href="tailwind.css">
+    <script>
+        const user = JSON.parse(sessionStorage.getItem("user") || "null");
+
+        if (!user || user.role !== "USER") {
+            sessionStorage.clear();
+            window.location.replace("index.html");
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>New Request - UniSupport</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        /* Smooth transitions */
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+        }
+
+        .btn-press:active {
+            transform: scale(0.96);
+            transition: transform 0.1s;
+        }
+
+        /* Toast animation */
+        #notification-toast {
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        #notification-toast.show-toast {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Drag & Drop Area Animations */
+
+        .dark
+
+        /* zinc-900 */
+    </style>
+</head>
+
+<body class="bg-[#f4f5f7] dark:bg-zinc-950 text-gray-800 dark:text-gray-200 min-h-screen overflow-x-hidden flex">
+
+    <div id="initial-loader"
+        class="fixed inset-0 z-[100] bg-white dark:bg-zinc-950 flex flex-col items-center justify-center transition-opacity duration-500">
+        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-600 dark:text-indigo-400 mb-4"></i>
+        <p class="text-gray-500 dark:text-zinc-400 font-medium tracking-wide animate-pulse">Loading Form...</p>
+    </div>
+
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-40 w-[260px] bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-sm dark:shadow-none flex flex-col">
+        <div class="h-[75px] px-6 flex items-center border-b border-gray-100 dark:border-zinc-800">
+            <div class="flex items-center gap-2">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-indigo-400 text-white flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-graduation-cap text-sm"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-[#3b5278] dark:text-gray-100">Uni<span
+                        class="text-indigo-600 dark:text-indigo-400">Support</span></h1>
+            </div>
+        </div>
+
+        <nav class="flex-1 pt-6 pb-4 space-y-1">
+            <p class="px-6 text-[11px] font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
+                Main Menu</p>
+
+            <a href="dashboard.html"
+                class="nav-item mx-3 px-3 py-2.5 rounded-md flex items-center text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 font-medium text-sm transition-colors">
+                <i class="fa-solid fa-table-columns w-6 text-center"></i>
+                <span class="ml-2">Dashboard</span>
+            </a>
+
+            <a href="my-complaints.html"
+                class="nav-item mx-3 px-3 py-2.5 rounded-md flex items-center text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 font-medium text-sm transition-colors">
+                <i class="fa-solid fa-ticket w-6 text-center"></i>
+                <span class="ml-2">My Tickets</span>
+            </a>
+
+            <a href="add-complaint.html"
+                class="nav-item mx-3 px-3 py-2.5 rounded-md flex items-center bg-blue-50 dark:bg-zinc-800 text-blue-700 dark:text-indigo-300 font-medium text-sm transition-colors relative">
+                <span
+                    class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 dark:bg-indigo-400 rounded-r-md"></span>
+                <i class="fa-solid fa-plus-circle w-6 text-center"></i>
+                <span class="ml-2">New Request</span>
+            </a>
+
+            <div class="my-5 border-t border-gray-100 dark:border-zinc-800"></div>
+
+            <p class="px-6 text-[11px] font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
+                System</p>
+
+            <a href="#"
+                class="nav-item mx-3 px-3 py-2.5 rounded-md flex items-center text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800/50 font-medium text-sm transition-colors">
+                <i class="fa-solid fa-chart-line w-6 text-center"></i>
+                <span class="ml-2">Reports</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900">
+            <div class="flex items-center gap-3">
+                <img id="userAvatar" src=""
+                    class="w-9 h-9 rounded-full border-2 border-white dark:border-zinc-700 shadow-sm">
+                <div class="flex-1 min-w-0">
+                    <p id="username" class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">User</p>
+                    <a href="#" onclick="logout()" class="text-red-500">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/60 z-30 hidden md:hidden transition-opacity"></div>
+
+    <main class="flex-1 md:ml-[260px] flex flex-col min-h-screen relative">
+
+        <header
+            class="h-[75px] bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm dark:shadow-none">
+            <div class="flex items-center">
+                <button id="sidebar-toggle"
+                    class="md:hidden mr-4 text-gray-500 dark:text-gray-400 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-zinc-800 btn-press">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <h2 class="text-lg font-bold text-gray-800 dark:text-gray-100">File a Complaint</h2>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="toggleTheme()"
+                    class="w-9 h-9 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors btn-press"
+                    title="Toggle Dark Mode">
+                    <i id="theme-icon" class="fa-solid fa-moon"></i>
+                </button>
+
+                <button onclick="window.location.href='dashboard.html'"
+                    class="hidden sm:flex bg-white dark:bg-zinc-950 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-zinc-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors items-center gap-2 btn-press">
+                    <i class="fa-solid fa-arrow-left text-xs"></i> Dashboard
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 p-6 md:p-8 flex justify-center animate-[fadeIn_0.4s_ease-out]">
+
+            <div class="w-full max-w-3xl">
+
+                <div
+                    class="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm dark:shadow-none overflow-hidden">
+
+                    <div
+                        class="px-8 py-6 border-b border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-950/50">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white">Submit a New Request</h3>
+                        <p class="text-sm text-gray-500 dark:text-zinc-400 mt-1">Please provide detailed information so
+                            the concerned department can resolve your issue quickly.</p>
+                    </div>
+
+                    <div class="p-8">
+                        <form id="complaintForm" onsubmit="submitComplaint(event)">
+
+                            <div class="mb-6">
+                                <label
+                                    class="block text-[13px] font-bold text-gray-700 dark:text-gray-200 mb-2 uppercase tracking-wide">Brief
+                                    Subject Title <span class="text-red-500">*</span></label>
+                                <input id="title" type="text"
+                                    class="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-500 transition-all"
+                                    placeholder="" required>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+
+                                <div>
+                                    <label
+                                        class="block text-[13px] font-bold text-gray-700 dark:text-gray-200 mb-2 uppercase tracking-wide">Category
+                                        <span class="text-red-500">*</span></label>
+                                    <select
+                                        class="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-500 transition-all"
+                                        required>
+                                        <option value="">-- Select Department --</option>
+                                        <option value="it_network">IT & Network (Wi-Fi, Portals)</option>
+                                        <option value="hardware">Hardware & Lab Equipment</option>
+                                        <option value="maintenance">Facilities & Maintenance (Plumbing, AC)</option>
+                                        <option value="hostel">Hostel & Mess Management</option>
+                                        <option value="library">Library & Resources</option>
+                                        <option value="accounts">Accounts & Fee Section</option>
+                                        <option value="sports">Sports & Events</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-[13px] font-bold text-gray-700 dark:text-gray-200 mb-2 uppercase tracking-wide">Priority
+                                        Level <span class="text-red-500">*</span></label>
+                                    <select
+                                        class="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-500 transition-all"
+                                        required>
+                                        <option value="low">Low (General queries)</option>
+                                        <option value="medium" selected>Medium (Standard SLA)</option>
+                                        <option value="high">High (Impacting academics/work)</option>
+                                        <option value="critical">Critical (System down, safety risk)</option>
+                                    </select>
+                                </div>
+
+                            </div>
+
+                            <div class="mb-6">
+                                <label
+                                    class="block text-[13px] font-bold text-gray-700 dark:text-gray-200 mb-2 uppercase tracking-wide">Detailed
+                                    Description <span class="text-red-500">*</span></label>
+                                <textarea id="description"
+                                    class="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 dark:focus:border-indigo-500 transition-all resize-y"
+                                    rows="5" placeholder="" required></textarea>
+                            </div>
+
+                            <div class="mb-8"></div>
+
+                            <hr class="border-gray-100 dark:border-zinc-800 mb-6">
+
+                            <div class="flex justify-end gap-3">
+                                <button type="button" onclick="window.location.href='dashboard.html'"
+                                    class="px-6 py-2.5 rounded-lg font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors btn-press">
+                                    Cancel
+                                </button>
+                                <button type="submit" id="submitBtn"
+                                    class="bg-indigo-600 text-white px-8 py-2.5 rounded-lg font-semibold shadow-md hover:bg-indigo-700 transition-colors flex items-center justify-center min-w-[160px] btn-press">
+                                    Submit Ticket
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="notification-toast"
+        class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-xl">
+        <i class="fa-solid fa-check-circle text-emerald-500 text-lg"></i>
+        <div>
+            <h6 class="text-sm font-bold text-gray-800 dark:text-gray-100 mb-0">Success!</h6>
+            <span class="text-xs text-gray-500 dark:text-gray-400">Your complaint has been logged.</span>
+        </div>
+    </div>
+
+    <script>
+
+        // Loading Screen
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.getElementById('initial-loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('initial-loader').remove(), 500);
+            }, 400);
+        });
+
+        // Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        function toggleSidebar() {
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                mobileOverlay.classList.remove('hidden');
+                setTimeout(() => mobileOverlay.classList.add('opacity-100'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                mobileOverlay.classList.remove('opacity-100');
+                setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+            }
+        }
+        document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
+        mobileOverlay.addEventListener('click', toggleSidebar);
+
+        // Dark Mode Logic
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-icon').className = 'fa-solid fa-sun';
+        }
+
+        function logout() {
+            sessionStorage.removeItem("user");
+            serverLogout().finally(() => {
+                sessionStorage.setItem("logoutSuccess", "true");
+                window.location.replace("index.html");
+            });
+        }
+
+        // --- SUBMIT FORM LOGIC ---
+        function submitComplaint(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+
+            const title = document.getElementById("title").value;
+            function toTitleCase(str) {
+                return str.toLowerCase().replace(
+                    /\b\w/g,
+                    char => char.toUpperCase()
+                );
+            }
+
+            const formattedTitle = toTitleCase(title.trim());
+            const titleRegex = /^[a-zA-Z0-9 ]+$/;
+
+            if (!titleRegex.test(title.trim())) {
+                showToast("Invalid Title", false);
+                btn.disabled = false;
+                btn.innerHTML = "Submit Ticket";
+                return;
+            }
+            const category = document.querySelectorAll("select")[0].value;
+            const priority = document.querySelectorAll("select")[1].value;
+            const description = document.getElementById("description").value;
+
+            if (title.includes("<") || title.includes(">")) {
+                showToast("Invalid Title", false);
+                return;
+            }
+
+            if (description.includes("<") || description.includes(">")) {
+                alert("Invalid Description");
+                return;
+            }
+
+
+
+
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Submitting...`;
+            btn.disabled = true;
+            if (!category) {
+                alert("Please select category");
+                btn.disabled = false;
+                btn.innerHTML = "Submit Ticket";
+                return;
+            }
+
+            if (!title || !description) {
+                alert("Fill all fields");
+                btn.disabled = false;
+                btn.innerHTML = "Submit Ticket";
+                return;
+            }
+            fetch("/api/complaints", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    title: formattedTitle,
+                    description: description.trim(),
+                    priority: priority,
+                    category: category
+                })
+            })
+                .then(res => {
+                    if (!res.ok) {
+                        return res.json().catch(() => ({})).then(b => {
+                            throw new Error(b.error || "Invalid Data");
+                        });
+                    }
+                    return res.json();
+                })
+                .then(data => {
+
+                    sessionStorage.setItem("complaintAdded", "true");
+
+
+                    window.location.href = "dashboard.html";
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerHTML = "Submit Ticket";
+                    alert(err.message || "Could not submit complaint");
+                });
+        }
+
+
+        const currentUser =
+            JSON.parse(sessionStorage.getItem("user") || "null");
+
+        if (currentUser && currentUser.name) {
+
+            document.getElementById("username").innerText =
+                currentUser.name;
+
+            document.getElementById("userAvatar").src =
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=cbd5e1&color=334155`;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script>
+        function showToast(message, success = true) {
+            Toastify({
+                text: message,
+                duration: 3000,
+                gravity: "bottom",
+                position: "right",
+                close: true,
+                stopOnFocus: true,
+                style: {
+                    background: success
+                        ? "linear-gradient(to right, #00b09b, #96c93d)"
+                        : "linear-gradient(to right, #ff416c, #ff4b2b)"
+                }
+            }).showToast();
+        }
+    </script>
+
+</body>
+
+</html>
